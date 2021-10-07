@@ -1,0 +1,4 @@
+(executable
+ (public_name rt2)
+ (name main)
+ (libraries rt2))
