@@ -1,2 +1,2 @@
 (library
- (name rt2))
+ (name vec3))

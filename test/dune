@@ -1,2 +1,3 @@
 (test
- (name rt2))
+ (name vec3_tests)
+ (libraries qcheck vec3))
