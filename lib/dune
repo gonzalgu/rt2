@@ -1,2 +1,2 @@
 (library
- (name vec3))
+ (name modules))
