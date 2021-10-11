@@ -3,19 +3,31 @@ open Modules
 open Vec3    
 
 
-let print_vec label v =
+let print_vec (label:string) (v:Vec3.t) =
   Printf.eprintf "%s=vec3{x=%F;y=%F;z=%F}\n"
     label v.x v.y v.z;;
 
+let hit_sphere (center:Vec3.t) (radius:float) (r:Ray.t) : bool =
+  let open Ray in
+  let oc = r.origin -: center in
+  let a = dot r.direction r.direction in
+  let b = 2.0 *. dot oc r.direction in
+  let c = dot oc oc -. radius*.radius in
+  let discriminant = b *. b -. 4. *. a *. c in
+  discriminant > 0.
+           
 
-let ray_color r =
-  let open Ray in  
-  let unit_direction = unit_vector r.direction in
-  let t = 0.5 *. (unit_direction.y +. 1.0) in
-  let le = (1.0 -. t) *| (Vec3.create 1. 1. 1.) in
-  let re = (t *| Vec3.create 0.5 0.7 1.0) in
-  let result = le +: re in
-  result
+let ray_color (r:Ray.t):Vec3.t =
+  let open Ray in
+  if hit_sphere (Vec3.create 0. 0. (-1.)) 0.5 r
+  then Vec3.create 1. 0. 0.
+  else
+    let unit_direction = unit_vector r.direction in
+    let t = 0.5 *. (unit_direction.y +. 1.0) in
+    let le = (1.0 -. t) *| (Vec3.create 1. 1. 1.) in
+    let re = (t *| Vec3.create 0.5 0.7 1.0) in
+    let result = le +: re in
+    result
 
 (* image *)
 let aspect_ratio = 16.0 /. 9.0;;
