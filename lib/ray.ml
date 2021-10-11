@@ -6,5 +6,5 @@ let create origin direction = {origin;direction}
 
 let at r t =
   let open Vec3 in
-  r.origin +: (t $* r.direction)
+  r.origin +: (t *| r.direction)
                                 

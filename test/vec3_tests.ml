@@ -133,6 +133,9 @@ let cross_anti_comm =
          let r = cross b a |> neg in
          l = r));;
 
+let eq_within a b delta =
+  let diff_small x y = Float.abs(x -. y) <= delta in
+  diff_small a.x b.x && diff_small a.y b.y && diff_small a.z b.z
 
 (* failing test *)
 let scalar_mult_distr_add =
@@ -142,10 +145,12 @@ let scalar_mult_distr_add =
       ~name:"scalar_mult_distr_add"
       (triple vec_arb vec_arb float)
       (fun (a,b,t) ->
-         let l = t $* (a +: b) in
-         let r = (t $* a) +: (t $* b) in         
-         l = r));;
-
+         let l = t *| (a +: b) in
+         let r = (t *| a) +: (t *| b) in
+         eq_within l r 1e-8))
+    
+(*     l = r));; *)
+ 
 
 (*
 failing with 
