@@ -11,15 +11,10 @@ let print_vec label v =
 let ray_color r =
   let open Ray in  
   let unit_direction = unit_vector r.direction in
-  let _ = print_vec "unit_direction" unit_direction in
   let t = 0.5 *. (unit_direction.y +. 1.0) in
-  let _ = Printf.eprintf "t=%F\n" t in
   let le = (1.0 -. t) *| (Vec3.create 1. 1. 1.) in
   let re = (t *| Vec3.create 0.5 0.7 1.0) in
-  let _ = print_vec "le" le in
-  let _ = print_vec "re" re in
   let result = le +: re in
-  let _ = print_vec "result" result in
   result
 
 (* image *)
@@ -38,8 +33,6 @@ let vertical = create 0. viewport_height 0.;;
 let lower_left_corner =
   origin -: ((horizontal /$ 2.) +: (vertical /$ 2.) +: create 0. 0. focal_length);;
 
-let _ = Printf.eprintf "llc={x=%F;y=%F;z=%F}\n"
-    lower_left_corner.x lower_left_corner.y lower_left_corner.z;;
 
 
 (* render *)
@@ -53,12 +46,8 @@ for j = (image_height-1) downto 0 do
       let d = (lower_left_corner +:
            (u *| horizontal) +:
                ((v *| vertical) -: origin)) in
-      let _ = print_vec "d" d in      
       let r = Ray.create origin d in
-      let _ = print_vec "r.o" r.origin in
-      let _ = print_vec "r.d" r.direction in 
       let pixel_color = ray_color r in
-      let _ = print_vec "p" pixel_color in
       Color.write_color stdout pixel_color      
     done
   end
