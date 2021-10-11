@@ -10,13 +10,13 @@ let print_vec (label:string) (v:Vec3.t) =
 let hit_sphere (center:Vec3.t) (radius:float) (r:Ray.t) : float =
   let open Ray in
   let oc = r.origin -: center in
-  let a = dot r.direction r.direction in
-  let b = 2.0 *. dot oc r.direction in
-  let c = dot oc oc -. radius*.radius in
-  let discriminant = b *. b -. 4. *. a *. c in
+  let a =  r.direction |> Vec3.length_squared in
+  let half_b = dot oc r.direction in 
+  let c = length_squared oc -. radius*.radius in
+  let discriminant = half_b *. half_b  -.  a *. c in
   if discriminant < 0.
   then  -.1.0
-  else ((-. b) -. Float.sqrt discriminant) /. (2.0 *. a)
+  else ((-. half_b) -. Float.sqrt discriminant) /.  a
 
            
 
