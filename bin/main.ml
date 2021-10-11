@@ -7,21 +7,27 @@ let print_vec (label:string) (v:Vec3.t) =
   Printf.eprintf "%s=vec3{x=%F;y=%F;z=%F}\n"
     label v.x v.y v.z;;
 
-let hit_sphere (center:Vec3.t) (radius:float) (r:Ray.t) : bool =
+let hit_sphere (center:Vec3.t) (radius:float) (r:Ray.t) : float =
   let open Ray in
   let oc = r.origin -: center in
   let a = dot r.direction r.direction in
   let b = 2.0 *. dot oc r.direction in
   let c = dot oc oc -. radius*.radius in
   let discriminant = b *. b -. 4. *. a *. c in
-  discriminant > 0.
+  if discriminant < 0.
+  then  -.1.0
+  else ((-. b) -. Float.sqrt discriminant) /. (2.0 *. a)
+
            
 
 let ray_color (r:Ray.t):Vec3.t =
   let open Ray in
-  if hit_sphere (Vec3.create 0. 0. (-1.)) 0.5 r
-  then Vec3.create 1. 0. 0.
-  else
+  let t = hit_sphere (Vec3.create 0. 0. (-1.)) 0.5 r in
+  if t > 0.0
+  then
+    let n = (Ray.at r t -: Vec3.create 0. 0. (-1.0)) |> unit_vector in
+    0.5 *| Vec3.create (n.x +. 1.) (n.y +. 1.) (n.z +. 1.)
+  else 
     let unit_direction = unit_vector r.direction in
     let t = 0.5 *. (unit_direction.y +. 1.0) in
     let le = (1.0 -. t) *| (Vec3.create 1. 1. 1.) in
