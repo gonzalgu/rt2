@@ -149,37 +149,6 @@ let scalar_mult_distr_add =
          let r = (t *| a) +: (t *| b) in
          eq_within l r 1e-8))
     
-(*     l = r));; *)
- 
-
-(*
-failing with 
-(vec3{x=-3542.40222435;y=497.477053988;z=4.03411964425e-07}, 
-vec3{x=2.30308860595e-06;y=-328001.325468;z=9.88017690785e-05}, 
-vec3{x=0.391571525407;y=-75999.6537407;z=-4.80538604571e-07})
-*)
-
-let repro =
-  let a = create (-.3542.40222435)      497.477053988  4.03411964425e-07 in
-  let b = create  2.30308860595e-06 (-.328001.325468)  9.88017690785e-05 in
-  let c = create  0.391571525407    (-.75999.6537407) (-.4.80538604571e-07) in
-  let lhs = dot (a +: b) c in
-  let rhs = (dot a c) +. (dot b c) in
-  Printf.printf "lhs=%F\nrhs=%F\n -- lhs=rhs -> %B\n" lhs rhs (lhs = rhs);;
-
-(*
-(vec3{x=8.96033389258e-06;y=256157.343324;z=-7751.8652061}, 
-vec3{x=8.90597301394e-07;y=-2136420.38625;z=0.0059805849195}, 
-vec3{x=1759.95135101;y=-187.53667152;z=26468.2414029})
-*)
-
-let repro2 =
-  let (a,b,c) = ({x=8.96033389258e-06;y=256157.343324;     z= (-.7751.8652061)}, 
-                 {x=8.90597301394e-07;y= (-.2136420.38625);z=0.0059805849195}, 
-                 {x=1759.95135101;    y=(-.187.53667152);  z=26468.2414029}) in
-  let lhs = dot (a +: b) c in
-  let rhs = (dot a c) +. (dot b c) in
-  Printf.printf "lhs=%F\nrhs=%F\n -- lhs=rhs -> %B\n" lhs rhs (lhs = rhs);;
 
 let dot_distr_over_add =
   QCheck.(
@@ -206,21 +175,6 @@ let test_unit_vector =
          diff < (3. *. Float.epsilon)));;
 
 
-(* failing case 
-vec3{x=-4.44045694979e-05;y=6424.45665155;z=-141249.897646}
-*)
-let unit_vector_repro_case =
-  let v = {x = (-4.44045694979e-05);y = 6424.45665155; z = (-141249.897646)} in
-  let result = length (unit_vector v) in
-  Printf.printf "length(unit_vector v) = %F\n -- %B\n -- diff:%F\n --small:%B\n"
-    result
-    (result ==  1.0)
-    (Float.abs (result -. 1.0))
-    ((Float.abs (result -. 1.0)) < Float.epsilon)    
-;;
-    
-
-
 (* Run tests *)
 let _ = QCheck_runner.run_tests
           ~verbose:true
@@ -245,3 +199,22 @@ let _ = QCheck_runner.run_tests
             dot_distr_over_add;
             test_unit_vector
           ];;
+
+
+(* sphere tests *)
+let test_create =
+  let open Modules.Sphere in
+  QCheck.(
+    Test.make
+      ~name:"sphere_create"
+      ~count:num_tests
+      (pair vec_arb float)
+      (fun (c,r) ->
+         let s = create c r in
+         s.center = c && s.radius = r))
+;;
+
+let _ = QCheck_runner.run_tests
+          ~verbose:true
+          [test_create]
+          

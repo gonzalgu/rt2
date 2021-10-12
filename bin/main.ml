@@ -2,7 +2,6 @@
 open Modules
 open Vec3    
 
-
 let print_vec (label:string) (v:Vec3.t) =
   Printf.eprintf "%s=vec3{x=%F;y=%F;z=%F}\n"
     label v.x v.y v.z;;
@@ -17,8 +16,6 @@ let hit_sphere (center:Vec3.t) (radius:float) (r:Ray.t) : float =
   if discriminant < 0.
   then  -.1.0
   else ((-. half_b) -. Float.sqrt discriminant) /.  a
-
-           
 
 let ray_color (r:Ray.t):Vec3.t =
   let open Ray in
@@ -50,7 +47,6 @@ let horizontal = create viewport_width 0. 0.;;
 let vertical = create 0. viewport_height 0.;;
 let lower_left_corner =
   origin -: ((horizontal /$ 2.) +: (vertical /$ 2.) +: create 0. 0. focal_length);;
-
 
 
 (* render *)
