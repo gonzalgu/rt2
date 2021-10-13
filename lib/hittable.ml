@@ -39,11 +39,12 @@ let rec hit (h:hittable) (r:Ray.t) (t_min:float) (t_max:float) (hrec:hit_record)
     let oc = r.origin -: s.center
     and a = length_squared r.direction in
     let half_b = dot oc r.direction
-    and c = length_squared oc -. s.radius *. s.radius in
-    let discriminant = half_b *. half_b -. a *. c in
+    and c = (length_squared oc) -. (s.radius *. s.radius) in
+    let discriminant = (half_b *. half_b) -. (a *. c) in
+    
     if discriminant < 0.
     then None
-    else
+    else(
       let sqrtd = Float.sqrt discriminant in
       let root0 = ((-. half_b) -. sqrtd) /. a in
       let root1 = ((-. half_b) +. sqrtd) /. a in
@@ -51,12 +52,14 @@ let rec hit (h:hittable) (r:Ray.t) (t_min:float) (t_max:float) (hrec:hit_record)
       let in_range x =
         t_min <= x && x <= t_max
       in
-      [root0;root1]
+
+      [root0;root1]      
       |> List.find_opt in_range
       |> Option.map (fun root ->
-          let outward_normal = hrec.p -: s.center /$ s.radius in
-          let hrec' = { hrec with t = root; p = Ray.at r hrec.t } in
-          set_face_normal hrec' r outward_normal)            
+          let hrec' = { hrec with t = root; p = Ray.at r root } in
+          let outward_normal = (hrec'.p -: s.center) /$ s.radius in          
+          set_face_normal hrec' r outward_normal
+        ))            
   in
 
   let hit_list (hl: hittable list) : hit_record option =
