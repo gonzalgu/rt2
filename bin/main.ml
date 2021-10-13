@@ -1,41 +1,36 @@
 (* open Modules.Vec3 *)
 open Modules
-open Vec3    
+open Vec3
 
+let degrees_to_radians deg = deg *. Float.pi /. 180.0;;
+                             
 let print_vec (label:string) (v:Vec3.t) =
   Printf.eprintf "%s=vec3{x=%F;y=%F;z=%F}\n"
     label v.x v.y v.z;;
 
-let hit_sphere (center:Vec3.t) (radius:float) (r:Ray.t) : float =
-  let open Ray in
-  let oc = r.origin -: center in
-  let a =  r.direction |> Vec3.length_squared in
-  let half_b = dot oc r.direction in 
-  let c = length_squared oc -. radius*.radius in
-  let discriminant = half_b *. half_b  -.  a *. c in
-  if discriminant < 0.
-  then  -.1.0
-  else ((-. half_b) -. Float.sqrt discriminant) /.  a
-
-let ray_color (r:Ray.t):Vec3.t =
-  let open Ray in
-  let t = hit_sphere (Vec3.create 0. 0. (-1.)) 0.5 r in
-  if t > 0.0
-  then
-    let n = (Ray.at r t -: Vec3.create 0. 0. (-1.0)) |> unit_vector in
-    0.5 *| Vec3.create (n.x +. 1.) (n.y +. 1.) (n.z +. 1.)
-  else 
-    let unit_direction = unit_vector r.direction in
+let ray_color (r:Ray.t) (world:Hittable.hittable):Vec3.t =
+  match Hittable.hit world r 0. Float.infinity Hittable.empty_hit_rec with
+  | Some(hrec') -> 0.5 *| (hrec'.normal +: Vec3.create 1. 1. 1.)
+  | None ->
+    let unit_direction = Vec3.unit_vector r.direction in
     let t = 0.5 *. (unit_direction.y +. 1.0) in
-    let le = (1.0 -. t) *| (Vec3.create 1. 1. 1.) in
-    let re = (t *| Vec3.create 0.5 0.7 1.0) in
-    let result = le +: re in
-    result
+    ((1.0 -. t) *| Vec3.create 1.0 1.0 1.0) +: (t *| Vec3.create 0.5 0.7 1.0);;
+
 
 (* image *)
 let aspect_ratio = 16.0 /. 9.0;;
 let image_width = 400;;
 let image_height = Float.to_int ((Float.of_int image_width) /.  aspect_ratio);;
+
+(* world *)
+let world = Hittable.(
+    Hit_list( 
+      [
+        Hittable.of_sphere { center = Vec3.create 0. 0. (-1.); radius = 0.5 };
+        Hittable.of_sphere { center = Vec3.create 0. (-100.5) (-1.); radius = 100. }
+      ])
+  );;
+
 
 (* camera *)
 let viewport_height = 2.0;;
@@ -61,7 +56,7 @@ for j = (image_height-1) downto 0 do
            (u *| horizontal) +:
                ((v *| vertical) -: origin)) in
       let r = Ray.create origin d in
-      let pixel_color = ray_color r in
+      let pixel_color = ray_color r world in
       Color.write_color stdout pixel_color      
     done
   end
