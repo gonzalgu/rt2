@@ -202,7 +202,7 @@ let _ = QCheck_runner.run_tests
 
 
 (* sphere tests *)
-let test_create =
+(* let test_create =
   let open Modules.Sphere in
   QCheck.(
     Test.make
@@ -218,3 +218,4 @@ let _ = QCheck_runner.run_tests
           ~verbose:true
           [test_create]
           
+*)

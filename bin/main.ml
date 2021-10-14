@@ -21,27 +21,24 @@ let ray_color (r:Ray.t) (world:Hittable.hittable):Vec3.t =
 let aspect_ratio = 16.0 /. 9.0;;
 let image_width = 400;;
 let image_height = Float.to_int ((Float.of_int image_width) /.  aspect_ratio);;
+let samples_per_pixel = 100;;
 
 (* world *)
 let world = Hittable.(
     Hit_list( 
       [
-        Hittable.of_sphere { center = Vec3.create 0. 0. (-1.); radius = 0.5 };
-        Hittable.of_sphere { center = Vec3.create 0. (-100.5) (-1.); radius = 100. }
+        Hittable.of_sphere { center = Vec3.create 0. 0. (0. -. 1.); radius = 0.5 };
+        Hittable.of_sphere { center = Vec3.create 0. (0. -. 100.5) (0. -. 1.); radius = 100. }
       ])
   );;
 
 
 (* camera *)
-let viewport_height = 2.0;;
-let viewport_width = aspect_ratio *. viewport_height;;
-let focal_length = 1.0;;
-
-let origin = create 0. 0. 0.;;
-let horizontal = create viewport_width 0. 0.;;
-let vertical = create 0. viewport_height 0.;;
-let lower_left_corner =
-  origin -: ((horizontal /$ 2.) +: (vertical /$ 2.) +: create 0. 0. focal_length);;
+let camera = Camera.create
+    ~aspect_ratio:aspect_ratio
+    ~viewport_height:2.0
+    ~focal_length:1.0
+;;
 
 
 (* render *)
@@ -50,14 +47,19 @@ for j = (image_height-1) downto 0 do
   begin
     Printf.eprintf "\rScanlines remaining: %d\n" j;
     for i = 0 to (image_width-1) do
-      let u = (Float.of_int i) /. Float.of_int (image_width-1) in
-      let v = (Float.of_int j) /. Float.of_int (image_height-1) in
-      let d = (lower_left_corner +:
-           (u *| horizontal) +:
-               ((v *| vertical) -: origin)) in
-      let r = Ray.create origin d in
-      let pixel_color = ray_color r world in
-      Color.write_color stdout pixel_color      
+      (*  ('b -> ('a * 'b) option) -> 'b -> 'a Seq.t = <fun> *)
+      let g x y = ((Float.of_int x) +. Rtweekend.random_f ()) /. ((Float.of_int y) -. 1.) in
+      let seq = Seq.unfold (fun x -> if x > 0 then Some(x-1, x-1) else None) samples_per_pixel in
+      let initial_color = Vec3.create 0. 0. 0. in
+      let pixel_color = seq
+                        (* : ('a -> 'b -> 'a) -> 'a -> 'b Seq.t -> 'a = <fun> *)
+                        |> Seq.fold_left (fun pix_col _ ->
+                            let u = g i image_width in
+                            let v = g j image_height in
+                            let r = Camera.get_ray u v camera in
+                            (pix_col +: ray_color r world)) initial_color
+      in      
+      Color.write_color stdout pixel_color samples_per_pixel      
     done
   end
 done;

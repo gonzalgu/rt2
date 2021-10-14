@@ -1,8 +1,18 @@
 
 open Vec3
-let write_color f color =
-  let pixel_value x = Float.to_int (255.999 *. x) in
+
+let get_clamped_color c =
+  Int.of_float @@ 256.0 *. Rtweekend.clamp c 0. 0.999
+;;
+
+let write_color f color samples_per_pixel =
+  let scale = 1.0 /. (Float.of_int samples_per_pixel)
+  in
   Printf.fprintf f "%d %d %d\n"
-    (pixel_value color.x) (pixel_value color.y) (pixel_value color.z)
+    (get_clamped_color @@ scale *. color.x)
+    (get_clamped_color @@ scale *. color.y)
+    (get_clamped_color @@ scale *. color.z)
+;;
+
     
       
