@@ -82,4 +82,33 @@ let rec hit (h:hittable) (r:Ray.t) (t_min:float) (t_max:float) (hrec:hit_record)
   | Hit_list(hl) -> hit_list hl
 ;;
 
+(*
+module HitRecord
+ struct
+   let hit_record = {}
+   let set_face_normal ... = 
+     ...
+ end
+
+module type Hittable 
+  sig
+    type t
+    val hit : 
+
+  end
+
+module Sphere : Hittable = 
+  struct 
+
+  end
+
+module HitList : Hittable = 
+  struct 
+
+  end
+ 
+
+*)
+
+
                        
