@@ -9,9 +9,9 @@ let write_color f color samples_per_pixel =
   let scale = 1.0 /. (Float.of_int samples_per_pixel)
   in
   Printf.fprintf f "%d %d %d\n"
-    (get_clamped_color @@ scale *. color.x)
-    (get_clamped_color @@ scale *. color.y)
-    (get_clamped_color @@ scale *. color.z)
+    (get_clamped_color @@ Float.sqrt(scale *. color.x))
+    (get_clamped_color @@ Float.sqrt(scale *. color.y))
+    (get_clamped_color @@ Float.sqrt(scale *. color.z))
 ;;
 
     
