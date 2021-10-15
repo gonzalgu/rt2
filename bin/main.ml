@@ -12,7 +12,7 @@ let rec ray_color (r:Ray.t) (world:Hittable.hittable) (depth:int):Vec3.t =
   if depth <= 0 then
     Vec3.create 0. 0. 0.
   else 
-    match Hittable.hit world r 0. Float.infinity Hittable.empty_hit_rec with
+    match Hittable.hit world r 0.001 Float.infinity Hittable.empty_hit_rec with
     | Some(hrec') ->
       let target = hrec'.p +: hrec'.normal +: (Vec3.random_in_unit_sphere ())
       in 0.5 *| ray_color (Ray.create hrec'.p  (target -: hrec'.p)) world (depth - 1) 
