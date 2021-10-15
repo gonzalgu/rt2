@@ -76,6 +76,15 @@ let random_unit_vector () =
   unit_vector @@ random_in_unit_sphere ()
 ;;
 
+let random_in_hemisphere normal =
+  let in_unit_sphere = random_in_unit_sphere ()
+  in
+  if dot in_unit_sphere normal > 0.0
+  then in_unit_sphere
+  else neg @@ in_unit_sphere
+;;
+
+
 
   
     
