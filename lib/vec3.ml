@@ -48,4 +48,31 @@ let cross v1 v2 =
 
 let unit_vector v = v /$ (length v)
   
+let vec3_rand () =
+  let open Rtweekend in
+  create (random_f()) (random_f()) (random_f())
+;;
+
+let vec3_random min max =
+  let open Rtweekend in
+  create
+    (random_float min max)
+    (random_float min max)
+    (random_float min max)
+;;
+
+
+let random_in_unit_sphere () =  
+  let rec loop p =
+    if length_squared p >= 1. then
+      loop @@ vec3_random (-. 1.) 1.
+    else
+      p
+  in
+  loop @@ vec3_random (-. 1.) 1.
+;;
+
+  
     
+
+
