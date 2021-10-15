@@ -14,7 +14,7 @@ let rec ray_color (r:Ray.t) (world:Hittable.hittable) (depth:int):Vec3.t =
   else 
     match Hittable.hit world r 0.001 Float.infinity Hittable.empty_hit_rec with
     | Some(hrec') ->
-      let target = hrec'.p +: hrec'.normal +: (Vec3.random_in_unit_sphere ())
+      let target = hrec'.p +: hrec'.normal +: (Vec3.random_unit_vector ())
       in 0.5 *| ray_color (Ray.create hrec'.p  (target -: hrec'.p)) world (depth - 1) 
     | None ->
       let unit_direction = Vec3.unit_vector r.direction in
@@ -27,7 +27,7 @@ let aspect_ratio = 16.0 /. 9.0;;
 let image_width = 400;;
 let image_height = Float.to_int ((Float.of_int image_width) /.  aspect_ratio);;
 let samples_per_pixel = 100;;
-let max_depth = 20;;
+let max_depth = 50;;
 
 (* world *)
 let world = Hittable.(

@@ -72,6 +72,11 @@ let random_in_unit_sphere () =
   loop @@ vec3_random (-. 1.) 1.
 ;;
 
+let random_unit_vector () =
+  unit_vector @@ random_in_unit_sphere ()
+;;
+
+
   
     
 
