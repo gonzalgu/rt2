@@ -1,4 +1,4 @@
-(* open Modules.Vec3 *)
+
 open Modules
 open Vec3
 
@@ -46,6 +46,24 @@ let camera = Camera.create
     ~focal_length:1.0
 ;;
 
+let sampled_pixel_color (i:int) (j:int) (samples_per_pixel:int) : Vec3.t =
+  let initial_color = Vec3.create 0. 0. 0. 
+  and get_rand_offset x y =
+    (Float.of_int x +. Rtweekend.random_f ()) /. (Float.of_int y -. 1.) 
+  and seq =
+    Seq.unfold (fun x ->
+        if x > 0 then Some(x-1, x-1)
+        else None) samples_per_pixel
+  in
+  seq
+  |> Seq.fold_left (fun pix_color _ ->
+      let u = get_rand_offset i image_width in
+      let v = get_rand_offset j image_height in
+      let r = Camera.get_ray u v camera in
+      (pix_color +: ray_color r world max_depth)) initial_color
+;;
+
+
 
 (* render *)
 Printf.printf "P3\n%d %d\n255\n" image_width image_height;
@@ -56,12 +74,13 @@ for j = (image_height-1) downto 0 do
       let g x y = ((Float.of_int x) +. Rtweekend.random_f ()) /. ((Float.of_int y) -. 1.) in
       let seq = Seq.unfold (fun x -> if x > 0 then Some(x-1, x-1) else None) samples_per_pixel in
       let initial_color = Vec3.create 0. 0. 0. in
-      let pixel_color = seq
-                        |> Seq.fold_left (fun pix_col _ ->
-                            let u = g i image_width in
-                            let v = g j image_height in
-                            let r = Camera.get_ray u v camera in
-                            (pix_col +: ray_color r world max_depth)) initial_color
+      let pixel_color =
+        seq
+        |> Seq.fold_left (fun pix_col _ ->
+            let u = g i image_width in
+            let v = g j image_height in
+            let r = Camera.get_ray u v camera in
+            (pix_col +: ray_color r world max_depth)) initial_color
       in      
       Color.write_color stdout pixel_color samples_per_pixel      
     done
