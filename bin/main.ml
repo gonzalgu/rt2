@@ -38,10 +38,10 @@ let max_depth = 50;;
 
 (* world *)
 let world = Hittable.(
-    let material_ground = Lambertian { albedo = Vec3.create 0.8 0.8 0.0 } in
-    let material_center = Lambertian { albedo = Vec3.create 0.7 0.3 0.3 } in
-    let material_left   = Metal { albedo = Vec3.create 0.8 0.8 0.8 } in
-    let material_right = Metal { albedo = Vec3.create 0.8 0.6 0.2 }
+    let material_ground = make_lambertian 0.8 0.8 0.0 in
+    let material_center = make_lambertian 0.7 0.3 0.3 in
+    let material_left   = make_metal 0.8 0.8 0.8 0.3 in 
+    let material_right = make_metal 0.8 0.6 0.2 1.0 
     in
     Hit_list( 
       [

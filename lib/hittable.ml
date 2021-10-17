@@ -8,7 +8,15 @@ type hit_record = {
 }
 and  material =
   | Lambertian of { albedo : Vec3.t }
-  | Metal of { albedo : Vec3.t };;
+  | Metal of { albedo : Vec3.t; fuzz : float };;
+
+let make_lambertian (x :float) (y:float) (z:float): material =
+  Lambertian { albedo = Vec3.create x y z }
+
+let make_metal (x:float)(y:float)(z:float)(f:float):material =
+  Metal{ albedo = Vec3.create x y z; fuzz = if f < 1. then f else 1. }
+
+
 
 let empty_hit_rec = {
   p = Vec3.create 0. 0. 0.;
@@ -106,9 +114,9 @@ let scatter (r_in:Ray.t) (hr:hit_record) (_:Vec3.t) (_:Ray.t) (mat:material) =
     let scattered' = Ray.create hr.p scatter_direction' in
     let attenuation' = albedo in
     Some (attenuation', scattered')
-  | Metal { albedo } ->
+  | Metal { albedo; fuzz } ->
     let reflected = Vec3.reflect (unit_vector r_in.direction) hr.normal in
-    let scattered' = Ray.create hr.p reflected in
+    let scattered' = Ray.create hr.p (reflected +: fuzz *| random_in_unit_sphere ()) in
     let attenuation' = albedo in
     if dot scattered'.direction hr.normal > 0.
     then Some(attenuation', scattered')

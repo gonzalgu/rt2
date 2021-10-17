@@ -201,21 +201,3 @@ let _ = QCheck_runner.run_tests
           ];;
 
 
-(* sphere tests *)
-(* let test_create =
-  let open Modules.Sphere in
-  QCheck.(
-    Test.make
-      ~name:"sphere_create"
-      ~count:num_tests
-      (pair vec_arb float)
-      (fun (c,r) ->
-         let s = create c r in
-         s.center = c && s.radius = r))
-;;
-
-let _ = QCheck_runner.run_tests
-          ~verbose:true
-          [test_create]
-          
-*)
