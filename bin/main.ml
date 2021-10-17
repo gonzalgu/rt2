@@ -35,35 +35,52 @@ let samples_per_pixel = 100;;
 let max_depth = 50;;
 
 (* world *)
-let ar = Float.cos(Float.pi /. 4.);;
 
 let world = Hittable.(
-    let material_left = make_lambertian 0. 1. 0. in 
-    let material_right = make_lambertian 0. 1. 0. in 
-    Hit_list 
-      [
-        
+    let material_ground = make_lambertian 0.8 0.8 0.0 in
+    let material_center = make_lambertian 0.1 0.2 0.5 in 
+    let material_left = make_dielectric 1.5 in 
+    let material_right = make_metal 0.8 0.6 0.2 0.0 in 
+    Hit_list( 
+      [        
         of_sphere {
-          center = Vec3.create (-. ar) 0. 1.;
-          mat = material_left;
-          radius = ar
+          center = Vec3.create 0. (-.100.5) (-.1.0);
+          mat = material_ground;
+          radius = 100.0
         };        
         of_sphere {
-          center = Vec3.create ar 0. (-.1.0);
+          center = Vec3.create 0. 0. (-.1.0);
+          mat = material_center;
+          radius = 0.5
+        };
+        of_sphere {
+          center = Vec3.create (-.1.0) 0. (-.1.0);
+          mat = material_left;
+          radius = 0.5
+        };
+        of_sphere {
+          center = Vec3.create (-.1.0) 0. (-.1.0);
+          mat = material_left;
+          radius = (-.0.45)
+        };
+        of_sphere {
+          center = Vec3.create 1.0 0.0 (-.1.0);
           mat = material_right;
-          radius = ar
+          radius = 0.5
         }
-      ]
-       
+      ])       
   );;
 
 
 (* camera *)
 let camera = Camera.create
+    ~lookfrom:(Vec3.create (-.2.) 2. 1.)
+    ~lookat:(Vec3.create 0. 0. (-.1.))
+    ~vup:(Vec3.create 0. 1. 0.)
+    ~vfov:(90.0)
     ~aspect_ratio:aspect_ratio
-    ~vfov:90.0
-    ~focal_length:1.0
 ;;
+
 
 
 
