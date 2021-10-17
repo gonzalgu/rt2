@@ -6,12 +6,19 @@ type t = {
   vertical:Vec3.t  
 }
 
-let create ~aspect_ratio  ~viewport_height ~focal_length = 
+let degrees_to_radians deg = deg *. Float.pi /. 180.0
+
+
+
+let create ~vfov ~aspect_ratio ~focal_length = 
   let open Vec3 in
-  let viewport_width = aspect_ratio *. viewport_height 
-  and origin = Vec3.create 0. 0. 0. in
-  let horizontal = Vec3.create viewport_width 0. 0. 
-  and vertical = Vec3.create 0. viewport_height 0. in
+  let theta = degrees_to_radians vfov in
+  let h = Float.tan (theta /. 2.) in
+  let viewport_height = 2.0 *. h in 
+  let viewport_width = aspect_ratio *. viewport_height in
+  let origin = Vec3.create 0. 0. 0. in
+  let horizontal = Vec3.create viewport_width 0. 0. in
+  let vertical = Vec3.create 0. viewport_height 0. in
   let lower_left_corner = origin -: horizontal /$ 2. -: vertical /$ 2. -: Vec3.create 0. 0. focal_length in
   {
     origin = origin;

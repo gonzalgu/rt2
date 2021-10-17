@@ -1,8 +1,6 @@
 
 open Modules
 open Vec3
-
-let degrees_to_radians deg = deg *. Float.pi /. 180.0;;
                              
 let print_vec (label:string) (v:Vec3.t) =
   Printf.eprintf "%s=vec3{x=%F;y=%F;z=%F}\n"
@@ -37,46 +35,33 @@ let samples_per_pixel = 100;;
 let max_depth = 50;;
 
 (* world *)
+let ar = Float.cos(Float.pi /. 4.);;
+
 let world = Hittable.(
-    let material_ground = make_lambertian 0.8 0.8 0.0 in
-    let material_center = make_lambertian 0.1 0.2 0.5 in
-    let material_left   = make_dielectric 1.5 in
-    let material_right = make_metal 0.8 0.6 0.2 1.0 
-    in
-    Hit_list( 
+    let material_left = make_lambertian 0. 1. 0. in 
+    let material_right = make_lambertian 0. 1. 0. in 
+    Hit_list 
       [
-        Hittable.of_sphere {
-          center = Vec3.create 0. (-. 100.5) (-. 1.);
-          mat = material_ground;
-          radius = 100.0
-        };
-        Hittable.of_sphere {
-          center = Vec3.create 0. 0. (-. 1.);
-          mat = material_center;          
-          radius = 0.5 };
-        Hittable.of_sphere {
-          center = Vec3.create (-. 1.) 0. (-. 1.);
+        
+        of_sphere {
+          center = Vec3.create (-. ar) 0. 1.;
           mat = material_left;
-          radius = 0.5
-        };
-        Hittable.of_sphere {
-          center = Vec3.create (-. 1.) 0. (-. 1.);
-          mat = material_left;
-          radius = -.0.4
-        };
-        Hittable.of_sphere {
-          center = Vec3.create 1. 0. (-. 1.);
+          radius = ar
+        };        
+        of_sphere {
+          center = Vec3.create ar 0. (-.1.0);
           mat = material_right;
-          radius = 0.5
+          radius = ar
         }
-      ])
+      ]
+       
   );;
 
 
 (* camera *)
 let camera = Camera.create
     ~aspect_ratio:aspect_ratio
-    ~viewport_height:2.0
+    ~vfov:90.0
     ~focal_length:1.0
 ;;
 
