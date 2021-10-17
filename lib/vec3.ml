@@ -18,7 +18,8 @@ let neg {x;y;z} =
 (* vec3 -> float -> vec3 *)
 let ( *$ ) {x;y;z} t =
   create (t*.x)(t*.y)(t*.z)
-    
+
+(* ( $* ) : float -> vec3 -> vec3 *)
 let ( *| ) t v       = v *$ t
 
 (* vec3 -> float -> vec3 *)
@@ -91,6 +92,12 @@ let near_zero v  =
 let reflect v n =
   v -: (2. *. dot v n) *| n
 
+
+let refract (uv : t) (n : t) (etai_over_etat : float) : t =
+  let cos_theta = Float.min (dot (neg uv) n) 1.0 in
+  let r_out_perp = etai_over_etat *| (uv +: cos_theta *| n) in
+  let r_out_parallel = Float.sqrt (Float.abs 1.0 -. length_squared(r_out_perp)) *| n in
+  r_out_perp +: (neg r_out_parallel)
 
 
 

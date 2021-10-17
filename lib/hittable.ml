@@ -8,13 +8,19 @@ type hit_record = {
 }
 and  material =
   | Lambertian of { albedo : Vec3.t }
-  | Metal of { albedo : Vec3.t; fuzz : float };;
+  | Metal of { albedo : Vec3.t; fuzz : float }
+  | Dielectric of { ir : float };;
 
 let make_lambertian (x :float) (y:float) (z:float): material =
   Lambertian { albedo = Vec3.create x y z }
 
 let make_metal (x:float)(y:float)(z:float)(f:float):material =
   Metal{ albedo = Vec3.create x y z; fuzz = if f < 1. then f else 1. }
+
+let make_dielectric index_of_refraction =
+  Dielectric { ir = index_of_refraction }
+
+
 
 
 
@@ -121,6 +127,24 @@ let scatter (r_in:Ray.t) (hr:hit_record) (_:Vec3.t) (_:Ray.t) (mat:material) =
     if dot scattered'.direction hr.normal > 0.
     then Some(attenuation', scattered')
     else None
+  | Dielectric { ir } ->
+    let attenuation' = Vec3.create 1.0 1.0 1.0 in
+    let refraction_ratio =
+      if hr.front_face
+      then (1.0 /. ir)
+      else ir
+    in
+    let unit_direction = unit_vector r_in.direction in
+    let cos_theta = Float.min (dot (neg unit_direction) hr.normal) 1.0 in
+    let sin_theta = Float.sqrt(1.0 -. cos_theta *. cos_theta) in
+    let cannot_refract = refraction_ratio *. sin_theta > 1.0 in
+    let direction =
+      if cannot_refract
+      then reflect unit_direction hr.normal
+      else refract unit_direction hr.normal refraction_ratio
+    in 
+    let scattered' = Ray.create hr.p direction in
+    Some(attenuation', scattered')
 ;;
 
 
