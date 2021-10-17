@@ -60,6 +60,11 @@ let world = Hittable.(
           radius = 0.5
         };
         Hittable.of_sphere {
+          center = Vec3.create (-. 1.) 0. (-. 1.);
+          mat = material_left;
+          radius = -.0.4
+        };
+        Hittable.of_sphere {
           center = Vec3.create 1. 0. (-. 1.);
           mat = material_right;
           radius = 0.5

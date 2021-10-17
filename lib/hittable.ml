@@ -107,6 +107,13 @@ let rec hit (h:hittable) (r:Ray.t) (t_min:float) (t_max:float) (hrec:hit_record)
   | Hit_list(hl) -> hit_list hl
 ;;
 
+
+let reflectance (cosine : float) (ref_idx : float) : float =
+  let r0 = (1. -. ref_idx) /. (1. +. ref_idx) in
+  let r0' = r0 *. r0 in
+  r0' +. (1. -. r0') *. Float.pow (1. -. cosine) 5.
+
+
 let scatter (r_in:Ray.t) (hr:hit_record) (_:Vec3.t) (_:Ray.t) (mat:material) =
   let open Vec3 in
   match mat with
@@ -139,13 +146,17 @@ let scatter (r_in:Ray.t) (hr:hit_record) (_:Vec3.t) (_:Ray.t) (mat:material) =
     let sin_theta = Float.sqrt(1.0 -. cos_theta *. cos_theta) in
     let cannot_refract = refraction_ratio *. sin_theta > 1.0 in
     let direction =
-      if cannot_refract
+      if cannot_refract || (reflectance cos_theta refraction_ratio > Rtweekend.random_f ()) 
       then reflect unit_direction hr.normal
       else refract unit_direction hr.normal refraction_ratio
     in 
     let scattered' = Ray.create hr.p direction in
     Some(attenuation', scattered')
 ;;
+
+
+
+
 
 
 (*
