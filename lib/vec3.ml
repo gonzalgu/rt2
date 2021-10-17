@@ -100,7 +100,20 @@ let refract (uv : t) (n : t) (etai_over_etat : float) : t =
   r_out_perp +: (neg r_out_parallel)
 
 
-
+let random_in_unit_disk () =
+  let create_rand_p () =
+    let open Rtweekend in
+    create (random_float (-1.) 1.) (random_float (-1.) 1.) 0.
+  in 
+  let rec aux p =
+    if length_squared p >= 1. then
+      aux @@ create_rand_p ()
+    else
+      p
+  in
+  aux @@ create_rand_p ()
+  
+  
   
     
 

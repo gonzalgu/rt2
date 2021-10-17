@@ -73,12 +73,21 @@ let world = Hittable.(
 
 
 (* camera *)
-let camera = Camera.create
-    ~lookfrom:(Vec3.create (-.2.) 2. 1.)
-    ~lookat:(Vec3.create 0. 0. (-.1.))
-    ~vup:(Vec3.create 0. 1. 0.)
-    ~vfov:(90.0)
+let camera =
+  let lookfrom = Vec3.create 3. 3. 2. in
+  let lookat = Vec3.create 0. 0. (-.1.) in
+  let vup = Vec3.create 0. 1. 0. in
+  let dist_to_focus = Vec3.length (lookfrom -: lookat) in
+  let aperture = 2.0
+  in
+  Camera.create
+    ~lookfrom:lookfrom
+    ~lookat:lookat
+    ~vup:vup
+    ~vfov:20.0
     ~aspect_ratio:aspect_ratio
+    ~aperture:aperture
+    ~focus_dist:dist_to_focus
 ;;
 
 
