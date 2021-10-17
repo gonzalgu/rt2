@@ -14,8 +14,15 @@ let rec ray_color (r:Ray.t) (world:Hittable.hittable) (depth:int):Vec3.t =
   else 
     match Hittable.hit world r 0.001 Float.infinity Hittable.empty_hit_rec with
     | Some(hrec') ->
-      let target = hrec'.p +: Vec3.random_in_hemisphere hrec'.normal 
-      in 0.5 *| ray_color (Ray.create hrec'.p  (target -: hrec'.p)) world (depth - 1) 
+      begin
+        let zVec = Vec3.create 0. 0. 0. in 
+        let scattered = Ray.create zVec zVec in
+        let attenuation = Vec3.create 0. 0. 0. in 
+        match Hittable.scatter r hrec' attenuation scattered hrec'.mat with
+        | Some (attenuation', scattered') ->
+          attenuation' *: ray_color scattered' world (depth-1)
+        | None -> Vec3.create 0. 0. 0.
+      end 
     | None ->
       let unit_direction = Vec3.unit_vector r.direction in
       let t = 0.5 *. (unit_direction.y +. 1.0) in
@@ -31,10 +38,32 @@ let max_depth = 50;;
 
 (* world *)
 let world = Hittable.(
+    let material_ground = Lambertian { albedo = Vec3.create 0.8 0.8 0.0 } in
+    let material_center = Lambertian { albedo = Vec3.create 0.7 0.3 0.3 } in
+    let material_left   = Metal { albedo = Vec3.create 0.8 0.8 0.8 } in
+    let material_right = Metal { albedo = Vec3.create 0.8 0.6 0.2 }
+    in
     Hit_list( 
       [
-        Hittable.of_sphere { center = Vec3.create 0. 0. (0. -. 1.); radius = 0.5 };
-        Hittable.of_sphere { center = Vec3.create 0. (0. -. 100.5) (0. -. 1.); radius = 100. }
+        Hittable.of_sphere {
+          center = Vec3.create 0. (-. 100.5) (-. 1.);
+          mat = material_ground;
+          radius = 100.0
+        };
+        Hittable.of_sphere {
+          center = Vec3.create 0. 0. (-. 1.);
+          mat = material_center;          
+          radius = 0.5 };
+        Hittable.of_sphere {
+          center = Vec3.create (-. 1.) 0. (-. 1.);
+          mat = material_left;
+          radius = 0.5
+        };
+        Hittable.of_sphere {
+          center = Vec3.create 1. 0. (-. 1.);
+          mat = material_right;
+          radius = 0.5
+        }
       ])
   );;
 
@@ -46,21 +75,29 @@ let camera = Camera.create
     ~focal_length:1.0
 ;;
 
+
+
 let sampled_pixel_color (i:int) (j:int) (samples_per_pixel:int) : Vec3.t =
-  let initial_color = Vec3.create 0. 0. 0. 
-  and get_rand_offset x y =
-    (Float.of_int x +. Rtweekend.random_f ()) /. (Float.of_int y -. 1.) 
-  and seq =
-    Seq.unfold (fun x ->
-        if x > 0 then Some(x-1, x-1)
-        else None) samples_per_pixel
-  in
+  let initial_color = Vec3.create 0. 0. 0. in
+  let get_rand_offset x y =
+    (Float.of_int x +. Rtweekend.random_f ()) /. (Float.of_int y -. 1.) in
+
+  let make_seq x =
+    if x > 0
+    then Some(x-1, x-1)
+    else None
+  in 
+
+  let seq = Seq.unfold make_seq samples_per_pixel in
+
+  let accumulate_sampled_pixel pix_color _ =
+    let u = get_rand_offset i image_width
+    and v = get_rand_offset j image_height in
+    let r = Camera.get_ray u v camera in
+    pix_color +: ray_color r world max_depth
+  in  
   seq
-  |> Seq.fold_left (fun pix_color _ ->
-      let u = get_rand_offset i image_width in
-      let v = get_rand_offset j image_height in
-      let r = Camera.get_ray u v camera in
-      (pix_color +: ray_color r world max_depth)) initial_color
+  |> Seq.fold_left accumulate_sampled_pixel initial_color
 ;;
 
 
@@ -71,18 +108,11 @@ for j = (image_height-1) downto 0 do
   begin
     Printf.eprintf "\rScanlines remaining: %d\n" j;
     for i = 0 to (image_width-1) do
-      let g x y = ((Float.of_int x) +. Rtweekend.random_f ()) /. ((Float.of_int y) -. 1.) in
-      let seq = Seq.unfold (fun x -> if x > 0 then Some(x-1, x-1) else None) samples_per_pixel in
-      let initial_color = Vec3.create 0. 0. 0. in
-      let pixel_color =
-        seq
-        |> Seq.fold_left (fun pix_col _ ->
-            let u = g i image_width in
-            let v = g j image_height in
-            let r = Camera.get_ray u v camera in
-            (pix_col +: ray_color r world max_depth)) initial_color
-      in      
-      Color.write_color stdout pixel_color samples_per_pixel      
+
+      let pixel_color = sampled_pixel_color i j samples_per_pixel
+      in
+      Color.write_color stdout pixel_color samples_per_pixel
+        
     done
   end
 done;

@@ -84,6 +84,14 @@ let random_in_hemisphere normal =
   else neg @@ in_unit_sphere
 ;;
 
+let near_zero v  =
+  let s = 1e-8 in
+  Float.abs v.x < s && Float.abs v.y < s && Float.abs v.z < s
+    
+let reflect v n =
+  v -: (2. *. dot v n) *| n
+
+
 
 
   

@@ -1,9 +1,19 @@
 
-type hit_record = { p:Vec3.t; normal:Vec3.t; t:float; front_face:bool}
+type hit_record = {
+  p:Vec3.t;
+  normal:Vec3.t;
+  mat:material;
+  t:float;
+  front_face:bool
+}
+and  material =
+  | Lambertian of { albedo : Vec3.t }
+  | Metal of { albedo : Vec3.t };;
 
 let empty_hit_rec = {
   p = Vec3.create 0. 0. 0.;
   normal = Vec3.create 0. 0. 0.;
+  mat = Lambertian { albedo = Vec3.create 0. 0. 0.};
   t = 0.;
   front_face = false
 };;
@@ -24,7 +34,7 @@ let set_face_normal (hr:hit_record) (r:Ray.t) (outward_normal:Vec3.t):hit_record
 type hittable =
   | Sphere of sphere
   | Hit_list of hittable list
-and sphere = { center:Vec3.t; radius:float }
+and sphere = { center:Vec3.t; radius:float; mat:material }
 
 let of_sphere (s:sphere):hittable = Sphere s    
 ;;
@@ -58,7 +68,8 @@ let rec hit (h:hittable) (r:Ray.t) (t_min:float) (t_max:float) (hrec:hit_record)
       |> Option.map (fun root ->
           let hrec' = { hrec with t = root; p = Ray.at r root } in
           let outward_normal = (hrec'.p -: s.center) /$ s.radius in          
-          set_face_normal hrec' r outward_normal
+          let hrec'' = set_face_normal hrec' r outward_normal in
+          { hrec'' with mat = s.mat }
         ))            
   in
 
@@ -81,6 +92,29 @@ let rec hit (h:hittable) (r:Ray.t) (t_min:float) (t_max:float) (hrec:hit_record)
   | Sphere(s) -> hit_sphere s
   | Hit_list(hl) -> hit_list hl
 ;;
+
+let scatter (r_in:Ray.t) (hr:hit_record) (_:Vec3.t) (_:Ray.t) (mat:material) =
+  let open Vec3 in
+  match mat with
+  | Lambertian { albedo } -> 
+    let scatter_direction = hr.normal +: Vec3.random_unit_vector () in
+    let scatter_direction' =
+      if Vec3.near_zero scatter_direction
+      then hr.normal
+      else scatter_direction
+    in    
+    let scattered' = Ray.create hr.p scatter_direction' in
+    let attenuation' = albedo in
+    Some (attenuation', scattered')
+  | Metal { albedo } ->
+    let reflected = Vec3.reflect (unit_vector r_in.direction) hr.normal in
+    let scattered' = Ray.create hr.p reflected in
+    let attenuation' = albedo in
+    if dot scattered'.direction hr.normal > 0.
+    then Some(attenuation', scattered')
+    else None
+;;
+
 
 (*
 module HitRecord
