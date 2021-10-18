@@ -28,8 +28,8 @@ let rec ray_color (r:Ray.t) (world:Hittable.hittable) (depth:int):Vec3.t =
 
 
 (* image *)
-let aspect_ratio = 16.0 /. 9.0;;
-let image_width = 400;;
+let aspect_ratio = 3.0 /. 2.0;;
+let image_width = 600;;
 let image_height = Float.to_int ((Float.of_int image_width) /.  aspect_ratio);;
 let samples_per_pixel = 100;;
 let max_depth = 50;;
@@ -61,7 +61,7 @@ let create_sphere  choose_mat center =
     Hittable.(of_sphere { center = center; radius = 0.2; mat = sphere_material })
 
 
-let create_rand_sphere a b =
+let create_rand_sphere (a, b) =
     let choose_mat = Rtweekend.random_f () in
     let x = Float.of_int a +. 0.9 *. Rtweekend.random_f () in
     let y = 0.2 in
@@ -69,17 +69,22 @@ let create_rand_sphere a b =
     let center = Vec3.create x y z in
     if Vec3.length (center -: Vec3.create 4. 0.2 0.) > 0.9
     then
-      let sphere = create_sphere choose_mat in
+      let sphere = create_sphere choose_mat center in
       Some(sphere)
     else
       None
 
 
-let random_scene () : Hittable.Hit_list =
+let random_scene () =
   let open Hittable in
   let ground_material = make_lambertian 0.5 0.5 0.5 in
-  let s = cartesian (-11 -- 10) (-11 -- 10) in  
-  in 
+  let ground_sphere = Hittable.of_sphere {
+      center = Vec3.create 0. (-.1000.0) 0.;
+      radius = 1000.0;
+      mat = ground_material      
+    }
+  in
+  let s = cartesian (-11 -- 10) (-11 -- 10) in    
   let world = 
     s
     |> Seq.map create_rand_sphere
@@ -107,52 +112,21 @@ let random_scene () : Hittable.Hit_list =
                     mat = material3
                   }
   in
-  Hittable.Hit_list( world @ [sphere1; sphere2; sphere3] )
+  let additional = [sphere1; sphere2; sphere3] in
+  Hittable.Hit_list( ground_sphere :: world @ additional )
 
 
-let world = Hittable.(
-    let material_ground = make_lambertian 0.8 0.8 0.0 in
-    let material_center = make_lambertian 0.1 0.2 0.5 in 
-    let material_left = make_dielectric 1.5 in 
-    let material_right = make_metal 0.8 0.6 0.2 0.0 in 
-    Hit_list( 
-      [        
-        of_sphere {
-          center = Vec3.create 0. (-.100.5) (-.1.0);
-          mat = material_ground;
-          radius = 100.0
-        };        
-        of_sphere {
-          center = Vec3.create 0. 0. (-.1.0);
-          mat = material_center;
-          radius = 0.5
-        };
-        of_sphere {
-          center = Vec3.create (-.1.0) 0. (-.1.0);
-          mat = material_left;
-          radius = 0.5
-        };
-        of_sphere {
-          center = Vec3.create (-.1.0) 0. (-.1.0);
-          mat = material_left;
-          radius = (-.0.45)
-        };
-        of_sphere {
-          center = Vec3.create 1.0 0.0 (-.1.0);
-          mat = material_right;
-          radius = 0.5
-        }
-      ])       
-  );;
+
+let world = random_scene ()
 
 
 (* camera *)
 let camera =
-  let lookfrom = Vec3.create 3. 3. 2. in
-  let lookat = Vec3.create 0. 0. (-.1.) in
+  let lookfrom = Vec3.create 13. 2. 3. in
+  let lookat = Vec3.create 0. 0. 0. in
   let vup = Vec3.create 0. 1. 0. in
-  let dist_to_focus = Vec3.length (lookfrom -: lookat) in
-  let aperture = 2.0
+  let dist_to_focus = 10.0 in
+  let aperture = 0.1
   in
   Camera.create
     ~lookfrom:lookfrom
@@ -196,7 +170,7 @@ let sampled_pixel_color (i:int) (j:int) (samples_per_pixel:int) : Vec3.t =
 Printf.printf "P3\n%d %d\n255\n" image_width image_height;
 for j = (image_height-1) downto 0 do
   begin
-    Printf.eprintf "\rScanlines remaining: %d\n" j;
+    Printf.eprintf "\rScanlines remaining: %d\n%!" j;
     for i = 0 to (image_width-1) do
 
       let pixel_color = sampled_pixel_color i j samples_per_pixel
@@ -206,4 +180,4 @@ for j = (image_height-1) downto 0 do
     done
   end
 done;
-Printf.eprintf "\nDone\n"
+Printf.eprintf "\nDone\n%!"
