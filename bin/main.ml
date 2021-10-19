@@ -1,6 +1,7 @@
 
 open Modules
 open Vec3
+open Domainslib
                              
 let print_vec (label:string) (v:Vec3.t) =
   Printf.eprintf "%s=vec3{x=%F;y=%F;z=%F}\n"
@@ -29,9 +30,9 @@ let rec ray_color (r:Ray.t) (world:Hittable.hittable) (depth:int):Vec3.t =
 
 (* image *)
 let aspect_ratio = 3.0 /. 2.0;;
-let image_width = 600;;
+let image_width = 400;;
 let image_height = Float.to_int ((Float.of_int image_width) /.  aspect_ratio);;
-let samples_per_pixel = 100;;
+let samples_per_pixel = 25;;
 let max_depth = 50;;
 
 (* world *)
@@ -138,32 +139,35 @@ let camera =
     ~focus_dist:dist_to_focus
 ;;
 
-
-
-
 let sampled_pixel_color (i:int) (j:int) (samples_per_pixel:int) : Vec3.t =
   let initial_color = Vec3.create 0. 0. 0. in
-  let get_rand_offset x y =
-    (Float.of_int x +. Rtweekend.random_f ()) /. (Float.of_int y -. 1.) in
-
-  let make_seq x =
-    if x > 0
-    then Some(x-1, x-1)
-    else None
-  in 
-
-  let seq = Seq.unfold make_seq samples_per_pixel in
-
+  let get_rand_offset x y = (Float.of_int x +. Rtweekend.random_f ()) /. (Float.of_int y -. 1.) in
+  let make_seq x = if x > 0 then Some(x-1, x-1) else None
+  in
   let accumulate_sampled_pixel pix_color _ =
     let u = get_rand_offset i image_width
     and v = get_rand_offset j image_height in
     let r = Camera.get_ray u v camera in
     pix_color +: ray_color r world max_depth
-  in  
+  in
+  let seq = Seq.unfold make_seq samples_per_pixel in  
   seq
   |> Seq.fold_left accumulate_sampled_pixel initial_color
 ;;
 
+let par_sampled_pixel_color pool (i:int) (j:int) (samples_per_pixel:int) : Vec3.t =
+  let z = Vec3.create 0. 0. 0. in
+  let sum = Vec3.( +: ) in  
+  Task.parallel_for_reduce ~start:0 ~finish:samples_per_pixel ~body:(fun _ -> 
+    let u = (Float.of_int i +. Rtweekend.random_f ()) /. (Float.of_int image_width -. 1.) in
+    let v = (Float.of_int j +. Rtweekend.random_f ()) /. (Float.of_int image_height -. 1.) in
+    let r = Camera.get_ray u v camera in 
+    let pixel = ray_color r world max_depth in
+    pixel
+  ) pool sum z
+;;
+
+let pool = Task.setup_pool ~num_additional_domains:10;;
 
 
 (* render *)
@@ -172,11 +176,9 @@ for j = (image_height-1) downto 0 do
   begin
     Printf.eprintf "\rScanlines remaining: %d\n%!" j;
     for i = 0 to (image_width-1) do
-
-      let pixel_color = sampled_pixel_color i j samples_per_pixel
-      in
-      Color.write_color stdout pixel_color samples_per_pixel
-        
+      let pixel_color = par_sampled_pixel_color pool i j samples_per_pixel 
+      in 
+      Color.write_color stdout pixel_color samples_per_pixel        
     done
   end
 done;
