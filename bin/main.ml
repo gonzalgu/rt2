@@ -96,17 +96,19 @@ let par_sampled_pixel_color pool (i:int) (j:int) (samples_per_pixel:int) : Vec3.
   ) pool sum z
 ;;
 
-let pool = Task.setup_pool ~num_additional_domains:10 ;;
+let pool = Task.setup_pool ~num_additional_domains:10 () ;;
 let img = Array.make_matrix image_height image_width @@ Vec3.create 0. 0. 0. ;;
 
-   
+
+let t_start = Unix.gettimeofday();;
 Task.parallel_for pool ~start:0 ~finish:(image_height-1) ~body:(fun k -> 
   for i = 0 to (image_width-1) do
     let j = image_height-1-k in
-    let pixel_color = par_sampled_pixel_color pool i j samples_per_pixel 
+    let pixel_color = sampled_pixel_color i j samples_per_pixel 
     in img.(j).(i) <- pixel_color;
   done
 );;
+let t_end = Unix.gettimeofday();;
 
 (* render image *)
 Printf.printf "P3\n%d %d\n255\n" image_width image_height;
@@ -117,5 +119,6 @@ for j = (image_height-1) downto 0 do
     Color.write_color stdout pixel_color samples_per_pixel;
   done;    
 done;
-Printf.eprintf "\nDone\n%!"
+Printf.eprintf "\nDone\n%!";
+Printf.eprintf "\nrendering time: %F\n" (t_end -. t_start)
 ;;
