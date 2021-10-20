@@ -1,4 +1,5 @@
-
+(* un comentario al inicio del archivo *)
+(*    *)
 open Modules
 open Vec3
 open Domainslib
@@ -30,97 +31,13 @@ let rec ray_color (r:Ray.t) (world:Hittable.hittable) (depth:int):Vec3.t =
 
 (* image *)
 let aspect_ratio = 3.0 /. 2.0;;
-let image_width = 400;;
+let image_width = 600;;
 let image_height = Float.to_int ((Float.of_int image_width) /.  aspect_ratio);;
-let samples_per_pixel = 25;;
+let samples_per_pixel = 100;;
 let max_depth = 50;;
 
 (* world *)
-let rec range a b =
-  if a > b
-  then Seq.empty
-  else Seq.cons a (range (a+1) b)
-
-let ( -- ) a b = range a b
-
-let cartesian s1 s2 =
-  s1 |> Seq.flat_map (fun x ->
-      s2 |> Seq.map (fun y -> (x,y)))
-                         
-let create_sphere  choose_mat center =
-  if choose_mat < 0.8 then
-    let albedo = Vec3.vec3_rand () *: Vec3.vec3_rand () in
-    let sphere_material = Hittable.Lambertian { albedo } in
-    Hittable.(of_sphere { center = center; radius = 0.2; mat = sphere_material })
-  else if choose_mat < 0.95 then
-    let albedo = Vec3.vec3_random 0.5 1.0 in
-    let fuzz = Rtweekend.random_float 0. 0.5 in
-    let sphere_material = Hittable.Metal { albedo; fuzz } in
-    Hittable.(of_sphere { center = center; radius = 0.2; mat = sphere_material })
-  else
-    let sphere_material = Hittable.Dielectric{ ir = 1.5 } in
-    Hittable.(of_sphere { center = center; radius = 0.2; mat = sphere_material })
-
-
-let create_rand_sphere (a, b) =
-    let choose_mat = Rtweekend.random_f () in
-    let x = Float.of_int a +. 0.9 *. Rtweekend.random_f () in
-    let y = 0.2 in
-    let z = Float.of_int b +. 0.9 *. Rtweekend.random_f () in      
-    let center = Vec3.create x y z in
-    if Vec3.length (center -: Vec3.create 4. 0.2 0.) > 0.9
-    then
-      let sphere = create_sphere choose_mat center in
-      Some(sphere)
-    else
-      None
-
-
-let random_scene () =
-  let open Hittable in
-  let ground_material = make_lambertian 0.5 0.5 0.5 in
-  let ground_sphere = Hittable.of_sphere {
-      center = Vec3.create 0. (-.1000.0) 0.;
-      radius = 1000.0;
-      mat = ground_material      
-    }
-  in
-  let s = cartesian (-11 -- 10) (-11 -- 10) in    
-  let world = 
-    s
-    |> Seq.map create_rand_sphere
-    |> Seq.filter Option.is_some
-    |> Seq.map Option.get
-    |> List.of_seq
-  in
-  let material1 = Hittable.make_dielectric 1.5 in
-  let sphere1 = Hittable.of_sphere {
-                    center = Vec3.create 0. 1. 0.;
-                    radius = 1.0;
-                    mat = material1}
-  in
-  let material2 = Hittable.make_lambertian 0.4 0.2 0.1 in
-  let sphere2 = Hittable.of_sphere {
-                    center = Vec3.create (-.4.0) 1. 0.; 
-                    radius = 1.0;
-                    mat = material2
-                  }
-  in
-  let material3 = Hittable.make_metal 0.7 0.6 0.5 0.0 in
-  let sphere3 = Hittable.of_sphere {
-                    center = Vec3.create 4.0 1.0 0.0;
-                    radius = 1.0;
-                    mat = material3
-                  }
-  in
-  let additional = [sphere1; sphere2; sphere3] in
-  Hittable.Hit_list( ground_sphere :: world @ additional )
-
-
-
-let world = random_scene ()
-
-
+let world = Scene.random_scene ()
 (* camera *)
 let camera =
   let lookfrom = Vec3.create 13. 2. 3. in
@@ -167,19 +84,26 @@ let par_sampled_pixel_color pool (i:int) (j:int) (samples_per_pixel:int) : Vec3.
   ) pool sum z
 ;;
 
-let pool = Task.setup_pool ~num_additional_domains:10;;
+let pool = Task.setup_pool ~num_additional_domains:10 ;;
+let img = Array.make_matrix image_height image_width @@ Vec3.create 0. 0. 0. ;;
 
+   
+Task.parallel_for pool ~start:0 ~finish:(image_height-1) ~body:(fun k -> 
+  for i = 0 to (image_width-1) do
+    let j = image_height-1-k in
+    let pixel_color = par_sampled_pixel_color pool i j samples_per_pixel 
+    in img.(j).(i) <- pixel_color;
+  done
+);;
 
-(* render *)
+(* render image *)
 Printf.printf "P3\n%d %d\n255\n" image_width image_height;
 for j = (image_height-1) downto 0 do
-  begin
-    Printf.eprintf "\rScanlines remaining: %d\n%!" j;
-    for i = 0 to (image_width-1) do
-      let pixel_color = par_sampled_pixel_color pool i j samples_per_pixel 
-      in 
-      Color.write_color stdout pixel_color samples_per_pixel        
-    done
-  end
+  Printf.eprintf "\rScanlines remaining: %d\n%!" j;
+  for i = 0 to (image_width-1) do
+    let pixel_color = img.(j).(i) in
+    Color.write_color stdout pixel_color samples_per_pixel;
+  done;    
 done;
 Printf.eprintf "\nDone\n%!"
+;;

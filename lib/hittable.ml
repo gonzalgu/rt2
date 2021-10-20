@@ -21,9 +21,6 @@ let make_dielectric index_of_refraction =
   Dielectric { ir = index_of_refraction }
 
 
-
-
-
 let empty_hit_rec = {
   p = Vec3.create 0. 0. 0.;
   normal = Vec3.create 0. 0. 0.;
