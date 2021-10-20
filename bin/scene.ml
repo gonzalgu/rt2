@@ -90,28 +90,31 @@ let random_scene () =
     let material_right  = make_metal 0.8 0.6 0.2 0.0 in
     Hit_list  
         [
+            (* ground *)
             of_sphere {
                 center = Vec3.create 0.0 (-.100.5) (-.1.0);
                 radius = 100.0;
                 mat = material_ground
             };
+
             of_sphere {
-                center = Vec3.create 0.0 0.0 (-.1.0);
+                center = Vec3.create (3.5) 0.0 (2.0);
                 radius = 0.5;
                 mat = material_center
             };
+            (* glass *)
             of_sphere {
-                center = Vec3.create (-1.0) (0.0) (-.1.0);
+                center = Vec3.create (5.0) (0.0) (1.0);
                 radius = 0.5;
                 mat = material_left
             };
             of_sphere {
-                center = Vec3.create (-1.0) (0.0) (-.1.0);
+                center = Vec3.create (5.0) (0.0) (1.0);
                 radius = (-.0.45);
                 mat = material_left
             };
             of_sphere {
-                center = Vec3.create 1.0 (0.0) (-.1.0);
+                center = Vec3.create 6.0 (0.0) (0.0);
                 radius = 0.5;
                 mat = material_right
             }

@@ -3,6 +3,18 @@
 open Modules
 open Vec3
 open Domainslib
+
+let usage_msg = "rt2 [-width] [-samples] [-tword]"
+let width = ref 600
+let samples = ref 100
+let use_test_world = ref false
+
+let speclist = 
+  [("-width", Arg.Set_int width, "Image width");
+  ("-samples", Arg.Set_int samples, "pixel samples");
+  ("-test_world", Arg.Set use_test_world, "use small test world") ]
+
+let () = Arg.parse speclist (fun _ -> ()) usage_msg;;
                              
 let print_vec (label:string) (v:Vec3.t) =
   Printf.eprintf "%s=vec3{x=%F;y=%F;z=%F}\n"
@@ -31,13 +43,13 @@ let rec ray_color (r:Ray.t) (world:Hittable.hittable) (depth:int):Vec3.t =
 
 (* image *)
 let aspect_ratio = 3.0 /. 2.0;;
-let image_width = 600;;
+let image_width = !width;;
 let image_height = Float.to_int ((Float.of_int image_width) /.  aspect_ratio);;
-let samples_per_pixel = 100;;
+let samples_per_pixel = !samples;;
 let max_depth = 50;;
 
 (* world *)
-let world = Scene.random_scene ()
+let world = if !use_test_world then Scene.testWorld () else Scene.random_scene()
 (* camera *)
 let camera =
   let lookfrom = Vec3.create 13. 2. 3. in
