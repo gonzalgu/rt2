@@ -1,5 +1,4 @@
-(* un comentario al inicio del archivo *)
-(*    *)
+
 open Modules
 open Vec3
 open Domainslib
@@ -47,7 +46,11 @@ let samples_per_pixel = !samples;;
 let max_depth = 50;;
 
 (* world *)
-let world = if !use_test_world then Scene.testWorld () else Scene.random_scene()
+let world = 
+  if !use_test_world 
+  then Scene.testWorld () 
+  else Scene.random_scene()
+
 (* camera *)
 let camera =
   let lookfrom = Vec3.create 13. 2. 3. in
@@ -77,9 +80,8 @@ let sampled_pixel_color (i:int) (j:int) (samples_per_pixel:int) : Vec3.t =
     let r = Camera.get_ray u v camera in
     pix_color +: ray_color r world max_depth
   in
-  let seq = Seq.unfold make_seq samples_per_pixel in  
-  seq
-  |> Seq.fold_left accumulate_sampled_pixel initial_color
+  Seq.unfold make_seq samples_per_pixel 
+  |> Seq.fold_left accumulate_sampled_pixel initial_color  
 ;;
 
 let par_sampled_pixel_color pool (i:int) (j:int) (samples_per_pixel:int) : Vec3.t =
