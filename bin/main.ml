@@ -4,21 +4,19 @@ open Modules
 open Vec3
 open Domainslib
 
-let usage_msg = "rt2 [-width] [-samples] [-tword]"
+let usage_msg = "rt2 [-width] [-samples] [-tword] [-threads]"
 let width = ref 600
 let samples = ref 100
 let use_test_world = ref false
+let thread_pool_size = ref 1
 
 let speclist = 
   [("-width", Arg.Set_int width, "Image width");
   ("-samples", Arg.Set_int samples, "pixel samples");
-  ("-test_world", Arg.Set use_test_world, "use small test world") ]
+  ("-test_world", Arg.Set use_test_world, "use small test world");
+  ("-threads", Arg.Set_int thread_pool_size, "render thread pool size") ]
 
-let () = Arg.parse speclist (fun _ -> ()) usage_msg;;
-                             
-let print_vec (label:string) (v:Vec3.t) =
-  Printf.eprintf "%s=vec3{x=%F;y=%F;z=%F}\n"
-    label v.x v.y v.z;;
+let () = Arg.parse speclist (fun _ -> ()) usage_msg;;                             
 
 let rec ray_color (r:Ray.t) (world:Hittable.hittable) (depth:int):Vec3.t =
   if depth <= 0 then
@@ -96,7 +94,7 @@ let par_sampled_pixel_color pool (i:int) (j:int) (samples_per_pixel:int) : Vec3.
   ) pool sum z
 ;;
 
-let pool = Task.setup_pool ~num_additional_domains:10 () ;;
+let pool = Task.setup_pool ~num_additional_domains:!thread_pool_size () ;;
 let img = Array.make_matrix image_height image_width @@ Vec3.create 0. 0. 0. ;;
 
 

@@ -112,6 +112,11 @@ let random_in_unit_disk () =
       p
   in
   aux @@ create_rand_p ()
+
+
+let print_vec (label:string) (v:t) =
+  Printf.eprintf "%s=vec3{x=%F;y=%F;z=%F}\n"
+    label v.x v.y v.z;;
   
   
   
